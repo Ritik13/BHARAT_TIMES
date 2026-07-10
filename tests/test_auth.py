@@ -31,22 +31,27 @@ def client():
         yield client
 
 
-def test_register_and_login_flow(client):
-    payload = {
-        "email": "user@example.com",
-        "password": "secret123",
-    }
+def test_register_user_returns_created_user(client):
+    payload = {"email": "user@example.com", "password": "secret123"}
 
-    register_response = client.post("/auth/register", json=payload)
-    assert register_response.status_code == 200
+    response = client.post("/auth/register", json=payload)
 
-    register_data = register_response.json()
-    assert register_data["email"] == payload["email"]
-    assert register_data["id"] is not None
+    assert response.status_code == 200
+    data = response.json()
+    assert data["email"] == payload["email"]
+    assert data["id"] is not None
 
-    login_response = client.post("/auth/login", json=payload)
+
+def test_login_returns_access_token(client):
+    payload = {"email": "user@example.com", "password": "secret123"}
+    client.post("/auth/register", json=payload)
+
+    login_response = client.post(
+        "/auth/login",
+        data={"username": payload["email"], "password": payload["password"]},
+    )
+
     assert login_response.status_code == 200
-
     token_data = login_response.json()
     assert token_data["token_type"] == "bearer"
     assert token_data["access_token"]
